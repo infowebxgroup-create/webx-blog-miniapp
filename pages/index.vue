@@ -19,7 +19,7 @@
     <h2 class="font-display text-lg font-semibold mb-3">Articles</h2>
     <div class="space-y-4">
       <article v-for="post in posts" :key="post._path" class="bg-opacity-50 rounded-xl p-4 border border-opacity-20" :class="cardClass">
-        <NuxtLink :to="'/blog' + post._path">
+        <NuxtLink :to="post._path">
           <div class="flex items-center gap-2 mb-2">
             <span class="text-xs px-2 py-0.5 rounded-full bg-primary-600">{{ post.category }}</span>
             <span class="text-xs opacity-50">{{ post.date }}</span>
@@ -34,6 +34,7 @@
 
 <script setup lang="ts">
 const news = ref<any[]>([])
+const theme = ref('dark')
 
 const cardClass = computed(() => {
   if (theme.value === 'dark') return 'bg-dark-card border-gray-700'
@@ -41,23 +42,15 @@ const cardClass = computed(() => {
   return 'bg-pink-card border-pink-700'
 })
 
-const theme = ref('dark')
-
 onMounted(async () => {
   theme.value = localStorage.getItem('theme') || 'dark'
-  
-  // Fetch news
   try {
     const { data } = await useFetch('/api/news')
-    if (data.value?.articles) {
-      news.value = data.value.articles
-    }
-  } catch (e) {
-    console.log('News error')
-  }
+    if (data.value?.articles) news.value = data.value.articles
+  } catch (e) {}
 })
 
 const { data: posts } = await useAsyncData('posts', () => 
-  queryContent('/blog').sort({ date: -1 }).limit(10).find()
+  queryContent('/blog').sort({ date: -1 }).find()
 )
 </script>
