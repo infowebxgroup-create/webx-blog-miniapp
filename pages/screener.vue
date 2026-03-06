@@ -1,15 +1,11 @@
 <template>
   <div class="px-4 py-6">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h1 class="font-display text-2xl font-bold">📊 Screener</h1>
-        <p class="text-xs opacity-50">{{ filteredStocks.length }} stocks</p>
-      </div>
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="font-display text-2xl font-bold">📊 Screener</h1>
       <div class="flex gap-2">
         <button @click="viewMode = viewMode === 'table' ? 'chart' : 'table'" 
-          class="px-4 py-2 rounded-lg text-sm font-medium"
-          :class="viewMode === 'table' ? 'bg-primary-500' : 'bg-opacity-20'">
+          class="px-4 py-2 rounded-lg text-sm" :class="viewMode === 'table' ? 'bg-primary-500' : 'bg-opacity-20'">
           {{ viewMode === 'table' ? '📊 Table' : '📈 Chart' }}
         </button>
       </div>
@@ -19,160 +15,127 @@
     <div class="mb-4 flex gap-2 overflow-x-auto pb-2">
       <button v-for="tab in tabs" :key="tab" @click="activeTab = tab" 
         :class="activeTab === tab ? 'bg-primary-500' : 'bg-opacity-20'" 
-        class="px-4 py-2 rounded-full text-sm whitespace-nowrap">
-        {{ tab }}
-      </button>
+        class="px-4 py-2 rounded-full text-sm whitespace-nowrap">{{ tab }}</button>
     </div>
     
-    <select v-model="sectorFilter" class="mb-4 px-3 py-2 rounded-lg text-sm bg-opacity-20">
-      <option value="">All Sectors</option>
-      <option v-for="s in sectors" :key="s" :value="s">{{ s }}</option>
-    </select>
+    <div class="flex gap-2 mb-4">
+      <select v-model="sectorFilter" class="px-3 py-2 rounded-lg text-sm bg-opacity-20">
+        <option value="">All Sectors</option>
+        <option v-for="s in sectors" :key="s" :value="s">{{ s }}</option>
+      </select>
+      
+      <!-- Chart Type Selector -->
+      <select v-model="chartType" class="px-3 py-2 rounded-lg text-sm bg-opacity-20">
+        <option value="line">📈 Line</option>
+        <option value="candle">🕯️ Candles</option>
+        <option value="area">📊 Area</option>
+        <option value="bars">📊 Bars</option>
+      </select>
+    </div>
+    
+    <!-- Info Bar -->
+    <div class="mb-4 flex items-center justify-between text-sm">
+      <span class="opacity-50">{{ selectedStocks.length }} selected</span>
+      <button v-if="selectedStocks.length > 0" @click="selectedStocks = []" class="text-primary-400">Clear</button>
+    </div>
     
     <!-- Loading -->
-    <div v-if="loading" class="space-y-3">
-      <div v-for="i in 5" :key="i" class="bg-opacity-20 rounded-xl p-4 animate-pulse">
-        <div class="h-4 w-24 bg-opacity-30 rounded mb-2"></div>
-        <div class="h-16 bg-opacity-30 rounded"></div>
-      </div>
+    <div v-if="loading" class="grid grid-cols-4 gap-2">
+      <div v-for="i in 16" :key="i" class="aspect-square bg-opacity-20 rounded-lg animate-pulse"></div>
     </div>
     
-    <!-- Table -->
-    <div v-else-if="viewMode === 'table'" class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="text-left text-xs opacity-50 border-b">
-            <th class="pb-2">#</th>
-            <th class="pb-2">Ticker</th>
-            <th class="pb-2">Sector</th>
-            <th class="pb-2 text-right">Price</th>
-            <th class="pb-2 text-right">%</th>
-            <th class="pb-2 text-right">Volume</th>
-            <th class="pb-2 text-right">M.Cap</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="stock in visibleStocks" :key="stock.id" class="border-b border-opacity-10">
-            <td class="py-3 opacity-50">{{ stock.id + 1 }}</td>
-            <td class="py-3 font-bold text-primary-400">{{ stock.ticker }}</td>
-            <td class="py-3 text-xs">{{ stock.sector }}</td>
-            <td class="py-3 text-right">${{ stock.price.toFixed(2) }}</td>
-            <td class="py-3 text-right" :class="stock.change >= 0 ? 'text-green-400' : 'text-red-400'">
-              {{ stock.change >= 0 ? '+' : '' }}{{ stock.change.toFixed(2) }}%
-            </td>
-            <td class="py-3 text-right opacity-70">{{ formatVolume(stock.volume) }}</td>
-            <td class="py-3 text-right opacity-70">{{ formatVolume(stock.marketCap) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    
-    <!-- Chart Grid -->
-    <div v-else class="grid gap-3" :style="gridStyle">
-      <div v-for="stock in visibleStocks" :key="stock.id" 
-        class="bg-opacity-20 rounded-xl border border-opacity-10 p-4">
-        <div class="flex justify-between mb-2">
-          <span class="font-bold">{{ stock.ticker }}</span>
-          <span :class="stock.change >= 0 ? 'text-green-400' : 'text-red-400'">
+    <!-- Chart Grid (4x4 = 16 always) -->
+    <div v-else class="grid grid-cols-4 gap-2">
+      <div v-for="stock in displayStocks" :key="stock.id" 
+        @click="toggleSelect(stock)"
+        @mouseenter="hoveredStock = stock"
+        @mouseleave="hoveredStock = null"
+        class="aspect-square rounded-lg border-2 cursor-pointer transition-all duration-200"
+        :class="isSelected(stock) ? 'border-primary-500 bg-primary-500/20' : 'border-transparent bg-opacity-20 hover:border-primary-500/50'">
+        
+        <!-- Ticker & Change -->
+        <div class="p-2 flex justify-between items-start">
+          <span class="font-bold text-sm">{{ stock.ticker }}</span>
+          <span :class="stock.change >= 0 ? 'text-green-400' : 'text-red-400'" class="text-xs font-bold">
             {{ stock.change >= 0 ? '+' : '' }}{{ stock.change.toFixed(2) }}%
           </span>
         </div>
-        <div class="h-20 mb-2">
-          <svg viewBox="0 0 100 45" class="w-full h-full">
-            <polyline fill="none" :stroke="stock.change >= 0 ? '#4ade80' : '#f87171'" stroke-width="2" :points="getChartPoints(stock)" />
+        
+        <!-- Chart -->
+        <div class="h-20 px-1">
+          <svg viewBox="0 0 60 30" class="w-full h-full" preserveAspectRatio="none">
+            <!-- Area -->
+            <path v-if="chartType === 'area'" :d="getAreaPath(stock)" :fill="getColor(stock)" opacity="0.3"/>
+            
+            <!-- Bars -->
+            <g v-if="chartType === 'bars'">
+              <rect v-for="(bar, i) in stock.chartData.slice(-15)" :key="i"
+                :x="i * 4" :y="bar.close > bar.open ? 30 - getBarHeight(bar) : 30 - getBarHeightLow(bar)" 
+                width="3" :height="Math.abs(getBarHeight(bar) - getBarHeightLow(bar))" 
+                :fill="bar.close > bar.open ? '#4ade80' : '#f87171'" rx="1"/>
+            </g>
+            
+            <!-- Candles -->
+            <g v-else-if="chartType === 'candle'">
+              <line v-for="(c, i) in stock.chartData.slice(-10)" :key="'w'+i"
+                :x1="i * 6 + 3" y1="30 - getY(c.low, stock)" :x2="i * 6 + 3" y2="30 - getY(c.high, stock)"
+                :stroke="c.close > c.open ? '#4ade80' : '#f87171'" stroke-width="1"/>
+              <rect v-for="(c, i) in stock.chartData.slice(-10)" :key="'b'+i"
+                :x="i * 6 + 1" :y="30 - Math.max(c.open, c.close) * scale" 
+                width="4" height="Math.max(1, Math.abs(c.close - c.open) * scale)"
+                :fill="c.close > c.open ? '#4ade80' : '#f87171'" rx="1"/>
+            </g>
+            
+            <!-- Line / Area default -->
+            <polyline v-if="chartType === 'line' || chartType === 'area'"
+              fill="none" :stroke="getColor(stock)" stroke-width="1.5"
+              :points="getLinePoints(stock)"/>
           </svg>
         </div>
-        <div class="flex justify-between text-xs opacity-50">
+        
+        <!-- Price -->
+        <div class="px-2 flex justify-between text-xs opacity-50">
           <span>${{ stock.price.toFixed(2) }}</span>
           <span>{{ formatVolume(stock.volume) }}</span>
         </div>
       </div>
     </div>
     
-    <!-- Infinite Scroll Trigger -->
-    <div ref="trigger" class="h-20 flex items-center justify-center">
-      <div v-if="visibleCount < filteredStocks.length" class="text-sm opacity-50">
-        Scroll for more ({{ filteredStocks.length - visibleCount }} remaining)...
-      </div>
-      <div v-else class="text-sm opacity-30">All loaded</div>
+    <!-- Scroll for more -->
+    <div v-if="!loading && displayStocks.length < filteredStocks.length" class="text-center py-4">
+      <button @click="showMore" class="px-6 py-2 bg-primary-500 rounded-full text-sm">
+        Show More (+{{ Math.min(16, filteredStocks.length - displayStocks.length) }})
+      </button>
     </div>
     
-    <!-- Grid Selector Button -->
-    <div v-if="viewMode === 'chart'" class="fixed bottom-24 right-4 z-20">
-      <button @click="showGridMenu = !showGridMenu" 
-        class="w-14 h-14 bg-primary-500 rounded-full shadow-lg flex items-center justify-center font-bold text-lg">
-        {{ gridSize }}×{{ gridSize }}
-      </button>
-      
-      <!-- Grid Menu (TradingView style) -->
-      <div v-if="showGridMenu" class="absolute bottom-16 right-0 w-72 bg-dark-card rounded-2xl border border-gray-700 shadow-2xl overflow-hidden">
-        <div class="p-4 border-b border-gray-700">
-          <h3 class="font-bold">РЕЖИМ СЕТКИ ГРАФИКОВ</h3>
-        </div>
-        
-        <div class="p-4 space-y-3">
-          <!-- Auto / Manual -->
-          <div class="flex gap-4">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="radio" v-model="gridMode" value="auto" class="accent-primary-500">
-              <span class="text-sm">Авто</span>
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="radio" v-model="gridMode" value="manual" class="accent-primary-500">
-              <span class="text-sm">Другой</span>
-            </label>
-          </div>
-          
-          <!-- Grid Preview -->
-          <div v-if="gridMode === 'manual'" class="bg-opacity-10 p-2 rounded-lg">
-            <div class="grid gap-1" :style="{ gridTemplateColumns: `repeat(${Math.min(gridSize, 4)}, 1fr)` }">
-              <div v-for="i in Math.min(gridSize * gridSize, 16)" :key="i" 
-                class="aspect-square bg-primary-500/30 rounded-sm">
-              </div>
-            </div>
-          </div>
-          
-          <!-- Options -->
-          <div class="space-y-2">
-            <label v-for="opt in gridOptions" :key="opt.value" 
-              class="flex items-center gap-3 cursor-pointer hover:bg-opacity-10 p-2 rounded-lg transition">
-              <input type="radio" v-model="gridSize" :value="opt.value" 
-                :disabled="gridMode === 'auto'" class="accent-primary-500">
-              <span class="text-sm" :class="gridMode === 'auto' ? 'opacity-50' : ''">{{ opt.label }}</span>
-            </label>
-          </div>
-        </div>
-        
-        <div class="p-3 bg-opacity-10 text-center text-sm">
-          {{ gridSize }} × {{ gridSize }} на экран
-        </div>
+    <!-- Selected Stocks List -->
+    <div v-if="selectedStocks.length > 0" class="mt-6 p-4 bg-primary-500/20 rounded-xl">
+      <h3 class="font-bold mb-2">Selected: {{ selectedStocks.length }}</h3>
+      <div class="flex flex-wrap gap-2">
+        <span v-for="s in selectedStocks" :key="s.id" 
+          class="px-3 py-1 bg-primary-500 rounded-full text-sm cursor-pointer"
+          @click="toggleSelect(s)">
+          {{ s.ticker }} ×
+        </span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 
-const viewMode = ref('table')
-const gridSize = ref(3)
-const gridMode = ref('auto')
+const viewMode = ref('chart')
+const chartType = ref('line')
 const activeTab = ref('All')
 const sectorFilter = ref('')
 const loading = ref(true)
-const showGridMenu = ref(false)
-const visibleCount = ref(30)
-const trigger = ref(null)
+const displayCount = ref(16)
+const hoveredStock = ref(null)
+const selectedStocks = ref([])
 
 const tabs = ['All', 'Gainers', 'Losers', 'Volume']
 const sectors = ['Tech', 'Finance', 'Healthcare', 'Energy', 'Consumer', 'Industrial']
-const gridOptions = [
-  { value: 1, label: '1 × 1 (1 график)' },
-  { value: 2, label: '2 × 2 (4 графика)' },
-  { value: 3, label: '3 × 3 (9 графиков)' },
-  { value: 4, label: '4 × 4 (16 графиков)' },
-  { value: 6, label: '6 × 6 (36 графиков)' }
-]
 
 const stocks = ref([])
 
@@ -180,21 +143,10 @@ onMounted(() => {
   setTimeout(() => {
     stocks.value = generateStocks()
     loading.value = false
-  }, 800)
-  
-  // Infinite scroll
-  const observer = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting && visibleCount.value < filteredStocks.value.length) {
-      visibleCount.value += 30
-    }
-  }, { rootMargin: '100px' })
-  
-  if (trigger.value) observer.observe(trigger.value)
-  onUnmounted(() => observer.disconnect())
+  }, 600)
 })
 
-// Reset visible count when filters change
-watch([activeTab, sectorFilter], () => { visibleCount.value = 30 })
+watch([activeTab, sectorFilter], () => { displayCount.value = 16; selectedStocks.value = [] })
 
 const filteredStocks = computed(() => {
   let result = [...stocks.value]
@@ -205,33 +157,49 @@ const filteredStocks = computed(() => {
   return result
 })
 
-const visibleStocks = computed(() => {
-  const max = viewMode.value === 'table' ? visibleCount.value : gridSize.value * gridSize.value
-  return filteredStocks.value.slice(0, max)
-})
+const displayStocks = computed(() => filteredStocks.value.slice(0, displayCount.value))
 
-const gridStyle = computed(() => ({
-  gridTemplateColumns: `repeat(${gridSize.value}, 1fr)`
-}))
+const showMore = () => { displayCount.value = Math.min(displayCount.value + 16, filteredStocks.value.length) }
 
-const formatVolume = (v) => {
-  if (v >= 1e12) return (v/1e12).toFixed(1) + 'T'
-  if (v >= 1e9) return (v/1e9).toFixed(1) + 'B'
-  if (v >= 1e6) return (v/1e6).toFixed(1) + 'M'
-  return v.toString()
+const toggleSelect = (stock) => {
+  const idx = selectedStocks.value.findIndex(s => s.id === stock.id)
+  if (idx >= 0) selectedStocks.value.splice(idx, 1)
+  else selectedStocks.value.push(stock)
 }
 
-const getChartPoints = (stock) => {
+const isSelected = (stock) => selectedStocks.value.some(s => s.id === stock.id)
+
+const formatVolume = (v) => v >= 1e6 ? (v/1e6).toFixed(0) + 'M' : v >= 1e3 ? (v/1e3).toFixed(0) + 'K' : v
+
+const getColor = (s) => s.change >= 0 ? '#4ade80' : '#f87171'
+
+const getLinePoints = (stock) => {
   const data = stock.chartData || []
-  if (!data.length) return '0,22 100,22'
+  if (!data.length) return '0,15 60,15'
   const prices = data.map(d => d.price)
-  const min = Math.min(...prices)
-  const max = Math.max(...prices)
+  const min = Math.min(...prices), max = Math.max(...prices)
   const range = max - min || 1
   return data.map((d, i) => {
-    const x = (i / (data.length - 1)) * 100
-    const y = 42 - ((d.price - min) / range) * 38
+    const x = (i / (data.length - 1)) * 60
+    const y = 30 - ((d.price - min) / range) * 26
     return `${x},${y}`
   }).join(' ')
 }
+
+const getAreaPath = (stock) => {
+  const points = getLinePoints(stock)
+  const lastX = 60
+  return points + ` ${lastX},30 0,30`
+}
+
+const scale = 0.5
+
+const getY = (price, stock) => {
+  const prices = stock.chartData.map(d => Math.max(d.high, d.low))
+  const min = Math.min(...prices), max = Math.max(...prices)
+  return ((price - min) / (max - min || 1)) * 26 + 2
+}
+
+const getBarHeight = (bar) => Math.max(1, Math.abs(bar.close - bar.open) * 0.5)
+const getBarHeightLow = (bar) => Math.max(1, Math.min(bar.close, bar.open) * 0.5)
 </script>
