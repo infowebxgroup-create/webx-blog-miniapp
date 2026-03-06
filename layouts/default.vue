@@ -21,8 +21,8 @@
       <div class="max-w-md mx-auto flex justify-around h-16 items-center">
         <NuxtLink to="/" class="flex flex-col items-center gap-1 p-2" :class="$route.path === '/' ? 'text-primary-400' : 'text-gray-400'">Home</NuxtLink>
         <NuxtLink to="/blog" class="flex flex-col items-center gap-1 p-2" :class="$route.path.startsWith('/blog') ? 'text-primary-400' : 'text-gray-400'">Blog</NuxtLink>
-        <NuxtLink to="/categories" class="flex flex-col items-center gap-1 p-2" :class="$route.path === '/categories' ? 'text-primary-400' : 'text-gray-400'">Topics</NuxtLink>
-        <NuxtLink to="/screener" class="flex flex-col items-center gap-1 p-2" :class="$route.path === '/about' ? 'text-primary-400' : 'text-gray-400'">Screener</NuxtLink><NuxtLink to="/about"
+        <NuxtLink to="/screener" class="flex flex-col items-center gap-1 p-2" :class="$route.path === '/screener' ? 'text-primary-400' : 'text-gray-400'">Screener</NuxtLink>
+        <NuxtLink to="/about" class="flex flex-col items-center gap-1 p-2" :class="$route.path === '/about' ? 'text-primary-400' : 'text-gray-400'">About</NuxtLink>
       </div>
     </nav>
   </div>
