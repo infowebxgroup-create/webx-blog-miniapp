@@ -1,25 +1,13 @@
-export default defineEventHandler(async (event) => {
-  const query = getQuery(event)
-  const category = query.category || 'general'
-  
-  // Using free NewsAPI alternative
-  const sources = {
-    crypto: 'cryptopanic',
-    tech: 'techcrunch',
-    science: 'national-geographic'
-  }
-  
-  try {
-    // Return mock news for demo (replace with real API)
-    return {
-      status: 'ok',
-      articles: [
-        { title: 'AI Continues to Transform Industries', description: 'Artificial intelligence adoption accelerates', source: 'Tech News', url: '#', publishedAt: new Date().toISOString() },
-        { title: 'Quantum Computing Breakthrough', description: 'New quantum processor achieves record qubits', source: 'Science Daily', url: '#', publishedAt: new Date().toISOString() },
-        { title: 'Web3 Development on the Rise', description: 'More developers joining blockchain ecosystem', source: 'Crypto News', url: '#', publishedAt: new Date().toISOString() }
-      ]
-    }
-  } catch (e) {
-    return { status: 'error', articles: [] }
+export default defineEventHandler(async () => {
+  // Return sample news
+  return {
+    status: 'ok',
+    articles: [
+      { title: 'GPT-5 Released with Native Computer Use', description: 'OpenAI releases most capable model with 1M context', source: 'TechCrunch' },
+      { title: 'Bitcoin Reaches New High', description: 'BTC hits $72,000 amid institutional adoption', source: 'CoinDesk' },
+      { title: 'Quantum Computing Breakthrough', description: 'New processor achieves 1000+ qubits', source: 'Nature' },
+      { title: 'Claude 4 Released', description: 'Anthropic releases most capable AI model yet', source: 'Anthropic' },
+      { title: 'Web3 Growth Accelerates', description: 'More developers join blockchain ecosystem', source: 'Decrypt' }
+    ]
   }
 })
