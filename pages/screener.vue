@@ -1,28 +1,25 @@
 <template>
   <div class="px-4 py-6">
     <div class="flex items-center justify-between mb-4">
-      <h1 class="font-display text-2xl font-bold">📊 Stock Screener</h1>
-      <button @click="toggleView" class="px-4 py-2 rounded-lg text-sm" :class="viewMode === 'table' ? 'bg-blue-500' : 'bg-green-500'">
-        {{ viewMode === 'table' ? '📊 Table' : '📈 Grid' }}
+      <h1 class="font-display text-2xl font-bold">Stock Screener</h1>
+      <button @click="viewMode = viewMode === 'table' ? 'grid' : 'table'" class="px-4 py-2 rounded-lg text-sm" :class="viewMode === 'table' ? 'bg-blue-500' : 'bg-green-500'">
+        {{ viewMode === 'table' ? 'Table' : 'Grid' }}
       </button>
     </div>
     
     <div class="mb-4 flex gap-2 overflow-x-auto">
-      <button v-for="tab in tabs" :key="tab" @click="activeTab = tab" 
-        class="px-4 py-2 rounded-full text-sm" :class="activeTab === tab ? 'bg-blue-500' : 'bg-gray-700'">{{ tab }}</button>
+      <button v-for="tab in tabs" :key="tab" @click="activeTab = tab" class="px-4 py-2 rounded-full text-sm" :class="activeTab === tab ? 'bg-blue-500' : 'bg-gray-700'">{{ tab }}</button>
     </div>
     
     <div class="mb-4 flex gap-2">
-      <button v-for="type in chartTypes" :key="type.value" @click="chartType = type.value"
-        class="px-3 py-1 rounded text-sm" :class="chartType === type.value ? 'bg-purple-500' : 'bg-gray-700'">{{ type.icon }}</button>
+      <button v-for="type in chartTypes" :key="type.value" @click="chartType = type.value" class="px-3 py-1 rounded text-sm" :class="chartType === type.value ? 'bg-purple-500' : 'bg-gray-700'">{{ type.icon }}</button>
     </div>
     
-    <div v-if="loading" class="grid gap-2" :style="{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }">
-      <div v-for="i in gridSize*gridSize" :key="i" class="aspect-square bg-gray-700 rounded animate-pulse"></div>
+    <div v-if="loading" class="grid gap-2" :style="{ gridTemplateColumns: 'repeat(' + gridSize + ', 1fr)' }">
+      <div v-for="i in gridSize * gridSize" :key="i" class="aspect-square bg-gray-700 rounded animate-pulse"></div>
     </div>
     
-    <!-- Grid View -->
-    <div v-else-if="viewMode === 'grid'" class="grid gap-2" :style="{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }">
+    <div v-else-if="viewMode === 'grid'" class="grid gap-2" :style="{ gridTemplateColumns: 'repeat(' + gridSize + ', 1fr)' }">
       <div v-for="stock in displayStocks" :key="stock.id" class="aspect-square bg-gray-800 rounded p-2">
         <div class="flex justify-between text-xs mb-1">
           <span class="font-bold">{{ stock.ticker }}</span>
@@ -35,7 +32,6 @@
       </div>
     </div>
     
-    <!-- Table View -->
     <div v-else class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead><tr class="text-left text-xs text-gray-400 border-b"><th>Ticker</th><th class="text-right">Price</th><th class="text-right">%</th></tr></thead>
@@ -52,50 +48,29 @@
     <div ref="trigger" class="h-4"></div>
     <div v-if="hasMore" class="text-center py-2 text-sm opacity-50">Scroll for more...</div>
     
-    <!-- Grid Modal Button -->
-    <button @click="showGridModal = true" class="fixed bottom-24 right-4 w-14 h-14 bg-blue-500 rounded-full shadow-lg flex items-center justify-center font-bold text-lg z-20">
-      {{ gridSize }}>
+    <button @click="showGridModal = true" class="fixed bottom-24 right-4 w-14 h-14 bg-blue-500 rounded-full shadow-lg font-bold z-20">{{ gridSize }}x{{ gridSize }}</button>
     
-    <!--×
-    </button Beautiful Grid Modal -->
     <div v-if="showGridModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50" @click.self="showGridModal = false">
-      <div class="bg-gray-900 rounded-2xl w-80 overflow-hidden border border-gray-700 shadow-2xl">
-        <div class="p-4 border-b border-gray-700">
-          <h3 class="font-bold text-lg">РЕЖИМ СЕТКИ ГРАФИКОВ</h3>
-        </div>
-        
+      <div class="bg-gray-900 rounded-2xl w-80 border border-gray-700">
+        <div class="p-4 border-b border-gray-700"><h3 class="font-bold">РЕЖИМ СЕТКИ ГРАФИКОВ</h3></div>
         <div class="p-4 space-y-4">
-          <!-- Radio options -->
           <div class="flex gap-4">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="radio" v-model="gridMode" value="auto" class="accent-blue-500">
-              <span>Авто</span>
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="radio" v-model="gridMode" value="manual" class="accent-blue-500">
-              <span>Другой</span>
-            </label>
+            <label class="flex items-center gap-2"><input type="radio" v-model="gridMode" value="auto" class="accent-blue-500"><span>Авто</span></label>
+            <label class="flex items-center gap-2"><input type="radio" v-model="gridMode" value="manual" class="accent-blue-500"><span>Другой</span></label>
           </div>
-          
-          <!-- Grid Preview -->
           <div class="bg-gray-800 rounded-lg p-3">
-            <div class="grid gap-1" :style="{ gridTemplateColumns: 'repeat(4, 1fr)' }">
+            <div class="grid grid-cols-4 gap-1">
               <div v-for="i in 16" :key="i" class="aspect-square bg-blue-500/30 rounded-sm"></div>
             </div>
           </div>
-          
-          <!-- Grid Options -->
           <div class="space-y-2">
-            <label v-for="opt in gridOptions" :key="opt.value" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800 cursor-pointer transition">
+            <label v-for="opt in gridOptions" :key="opt.value" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800 cursor-pointer">
               <input type="radio" v-model="gridSize" :value="opt.value" :disabled="gridMode === 'auto'" class="accent-blue-500">
               <span :class="gridMode === 'auto' ? 'opacity-50' : ''">{{ opt.label }}</span>
             </label>
           </div>
         </div>
-        
-        <div class="p-3 bg-gray-800 text-center text-sm">
-          {{ gridSize }} × {{ gridSize }} на экран
-        </div>
+        <div class="p-3 bg-gray-800 text-center text-sm">{{ gridSize }} x {{ gridSize }} на экран</div>
       </div>
     </div>
   </div>
@@ -114,13 +89,13 @@ const loading = ref(true)
 const trigger = ref(null)
 
 const tabs = ['All', 'Gainers', 'Losers', 'Volume']
-const chartTypes = [{value:'line',icon:'📈'},{value:'area',icon:'📊'},{value:'bars',icon:'▮'},{value:'candle',icon:'🕯'}]
+const chartTypes = [{value:'line',icon:'Line'},{value:'area',icon:'Area'},{value:'bars',icon:'Bars'},{value:'candle',icon:'Candle'}]
 const gridOptions = [
-  { value: 1, label: '1 × 1 (1 график)' },
-  { value: 2, label: '2 × 2 (4 графика)' },
-  { value: 3, label: '3 × 3 (9 графиков)' },
-  { value: 4, label: '4 × 4 (16 графиков)' },
-  { value: 6, label: '6 × 6 (36 графиков)' }
+  { value: 1, label: '1 x 1' },
+  { value: 2, label: '2 x 2' },
+  { value: 3, label: '3 x 3' },
+  { value: 4, label: '4 x 4' },
+  { value: 6, label: '6 x 6' }
 ]
 
 const stocks = ref([])
@@ -137,12 +112,10 @@ onMounted(() => {
 const hasMore = computed(() => displayCount.value < stocks.value.length)
 const displayStocks = computed(() => stocks.value.slice(0, displayCount.value))
 
-const toggleView = () => { viewMode.value = viewMode.value === 'table' ? 'grid' : 'table' }
-
 const getPoints = (s) => {
   const d = s.chartData || []
   if (!d.length) return '0,15 60,15'
-  return d.map((p, i) => `${(i/(d.length-1))*60},${30-(p.price/200)*25}`).join(' ')
+  return d.map((p, i) => ((i/(d.length-1))*60) + ',' + (30-(p.price/200)*25)).join(' ')
 }
 
 const getArea = (s) => getPoints(s) + ' 60,30 0,30'
