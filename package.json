@@ -20,7 +20,6 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
-    "@nuxt/devtools": "^1.7.0",
     "typescript": "^5.7.2"
   }
 }
