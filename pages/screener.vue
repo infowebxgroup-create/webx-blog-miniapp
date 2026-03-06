@@ -15,10 +15,6 @@
       <button v-for="type in chartTypes" :key="type.value" @click="chartType = type.value" class="px-3 py-1 rounded text-sm" :class="chartType === type.value ? 'bg-purple-500' : 'bg-gray-700'">{{ type.icon }}</button>
     </div>
     
-    <div class="mb-4 flex gap-2">
-      <button v-for="g in [2,3,4,6]" :key="g" @click="gridSize = g" class="px-3 py-1 rounded text-sm" :class="gridSize === g ? 'bg-blue-500' : 'bg-gray-700'">{{ g }}x{{ g }}</button>
-    </div>
-    
     <div v-if="loading" class="grid gap-2" :style="{ gridTemplateColumns: 'repeat(' + gridSize + ', 1fr)' }">
       <div v-for="i in gridSize * gridSize" :key="i" class="aspect-square bg-gray-700 rounded animate-pulse"></div>
     </div>
@@ -51,6 +47,25 @@
     
     <div ref="trigger" class="h-4"></div>
     <div v-if="hasMore" class="text-center py-2 text-sm opacity-50">Scroll for more...</div>
+    
+    <!-- Floating Grid Button -->
+    <button @click="showGrid = !showGrid" class="fixed bottom-24 right-4 w-14 h-14 bg-blue-500 rounded-full shadow-lg font-bold z-20">
+      {{ gridSize }}
+    </button>
+    
+    <!-- Grid Popup -->
+    <div v-if="showGrid" class="fixed inset-0 bg-black/70 flex items-center justify-center z-30" @click="showGrid = false">
+      <div class="bg-gray-900 rounded-2xl w-80 border border-gray-700" @click.stop>
+        <div class="p-4 border-b border-gray-700">
+          <h3 class="font-bold">Grid Mode</h3>
+        </div>
+        <div class="p-4 space-y-2">
+          <button v-for="g in [1,2,3,4,6]" :key="g" @click="gridSize = g; showGrid = false" class="w-full p-3 rounded-lg text-left" :class="gridSize === g ? 'bg-blue-500' : 'bg-gray-800'">
+            {{ g }} x {{ g }} ({{ g*g }} charts)
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -60,6 +75,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 const viewMode = ref('grid')
 const chartType = ref('line')
 const gridSize = ref(4)
+const showGrid = ref(false)
 const activeTab = ref('All')
 const loading = ref(true)
 const trigger = ref(null)
