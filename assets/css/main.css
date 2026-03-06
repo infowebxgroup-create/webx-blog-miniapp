@@ -2,14 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-  scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
+body { @apply bg-dark-bg text-white antialiased; }
+.light body { @apply bg-light-bg text-gray-900; }
+.pink body { @apply bg-pink-bg text-pink-100; }
 
-body {
-  @apply bg-dark-bg text-white antialiased;
-}
+::selection { @apply bg-primary-500/30; }
 
-::selection {
-  @apply bg-primary-500/30;
-}
+.prose h1, .prose h2, .prose h3 { @apply font-display font-bold; }
