@@ -1,19 +1,21 @@
 ---
-title: "Studying Quantum Mechanics with Artificial Intelligence"
-description: "How AI is revolutionizing the way we learn and understand quantum physics."
+title: "Изучение квантовой механики с помощью искусственного интеллекта"
+description: "Как AI революционизирует способ изучения и понимания квантовой физики."
 category: AI
 date: "2026-03-06"
-image: "/images/quantum-ai.jpg"
+translation:
+  title: "Studying Quantum Mechanics with Artificial Intelligence"
+  description: "How AI is revolutionizing the way we learn and understand quantum physics."
 ---
 
-# Studying Quantum Mechanics with AI
+# Изучение квантовой механики с помощью ИИ
 
-Quantum mechanics is one of the most fascinating yet challenging fields in physics. However, artificial intelligence is making it more accessible than ever before.
+Квантовая механика — одна из самых увлекательных и сложных областей физики. Однако искусственный интеллект делает её более доступной, чем когда-либо прежде.
 
-## Personalized Learning
+## Персонализированное обучение
 
-AI can adapt to your learning pace and style. It identifies gaps in your knowledge and creates customized lessons just for you.
+AI может адаптироваться к вашему стилю и темпу обучения. Он выявляет пробелы в ваших знаниях и создаёт индивидуальные уроки специально для вас.
 
-## Visual Explanations
+## Визуальные объяснения
 
-AI can generate 3D visualizations of quantum phenomena, helping you understand complex concepts through interactive graphics.
+AI может генерировать 3D-визуализации квантовых явлений, помогая понять сложные концепции через интерактивную графику.
